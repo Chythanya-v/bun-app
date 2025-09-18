@@ -1,35 +1,36 @@
-
-import type { KeyboardEvent } from "react"
-import { useRef } from "react"
-import axios from "axios"
-import { Button } from "./ui/button"
+import React from "react";
+import { Button } from "../ui/button"
 import { FaArrowUp } from "react-icons/fa"
 import { useForm } from "react-hook-form"
+import type { KeyboardEvent } from "react";
 
-type FormData = {
+export type ChatFormData = {
     prompt: string
 }
 
-const ChatBot = () => {
-    const conversationId = useRef(crypto.randomUUID())
-    const { register, handleSubmit, reset, formState } = useForm<FormData>()
+type Props = {
+    onSubmit: (data: ChatFormData) => void
+}
 
-    const onSubmit = async ({ prompt }: FormData) => {
-        console.log(prompt)
-        reset()
-        const data = await axios.post('/api/chat', { prompt, conversationId: conversationId.current })
-        console.log(data)
-    }
+const ChatInput = ({ onSubmit }: Props) => {
+    const { register, handleSubmit, reset, formState } = useForm<ChatFormData>()
+
 
     const onKeyDown = (e: KeyboardEvent<HTMLFormElement>) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            handleSubmit(onSubmit)()
+            handleFormSubmit()
         }
     }
+
+    const handleFormSubmit = handleSubmit(data => {
+        reset({ prompt: "" })
+        onSubmit(data)
+    })
+
     return (
         <form
-            onSubmit={handleSubmit(onSubmit)}
+            onSubmit={handleFormSubmit}
             onKeyDown={onKeyDown}
             className="flex flex-col gap-2 items-end border-2 p-4 rounded-3xl">
             <textarea
@@ -38,6 +39,7 @@ const ChatBot = () => {
                         required: true,
                         validate: (data) => data.trim().length > 0
                     })}
+                autoFocus
                 className="w-full focus:outline-0 resize-none"
                 placeholder="Ask anything"
                 maxLength={1000} />
@@ -46,9 +48,9 @@ const ChatBot = () => {
                 className="rounded-full w-9 h-9">
                 <FaArrowUp />
             </Button>
-
         </form>
     )
+
 }
 
-export default ChatBot
+export default ChatInput
